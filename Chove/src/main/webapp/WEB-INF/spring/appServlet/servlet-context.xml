@@ -3,9 +3,11 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:beans="http://www.springframework.org/schema/beans"
 	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
 	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
 	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
 	
@@ -21,8 +23,51 @@
 		<beans:property name="suffix" value=".jsp" />
 	</beans:bean>
 	
-	<context:component-scan base-package="com.cho.chove" />
+	<!-- Configure for convert data(xml,json)  -->
+	<beans:bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<beans:property name="order" value="1" />
+	    <beans:property name="contentNegotiationManager">
+	        <beans:bean class="org.springframework.web.accept.ContentNegotiationManager">
+	            <beans:constructor-arg>
+	                <beans:bean class="org.springframework.web.accept.PathExtensionContentNegotiationStrategy">
+	                    <beans:constructor-arg>
+	                        <beans:map>
+	                            <beans:entry key="json" value="application/json" />
+	                            <beans:entry key="xml" value="application/xml" />
+	                            <beans:entry key="xls" value="application/vnd.ms-excel" />
+	                        </beans:map>
+	                    </beans:constructor-arg>
+	                </beans:bean>
+	            </beans:constructor-arg>
+	        </beans:bean>
+	    </beans:property>
+	    <beans:property name="defaultViews">
+	        <beans:list>
+	            <!-- JSON View -->
+	            <beans:bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" />
+	            <!-- XML View -->
+	            <beans:bean class="org.springframework.web.servlet.view.xml.MarshallingView">
+	                <beans:constructor-arg>
+	                    <beans:bean class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+	                        <beans:property name="packagesToScan">
+	                            <beans:list>
+	                                <beans:value>com.cho.chove</beans:value>
+	                            </beans:list>
+	                        </beans:property>
+	                    </beans:bean>
+	                </beans:constructor-arg>
+	            </beans:bean>
+	            <!-- EXCEL VIEW -->
+	            <beans:bean class="com.cho.chove.support.poi.helper.PoiViewer"></beans:bean>
+	        </beans:list>
+	    </beans:property>
+	</beans:bean>
 	
-	
+	<context:component-scan base-package="com.cho.chove" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+    
+    <!-- Setting in order to controller's logging -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
 	
 </beans:beans>
